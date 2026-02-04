@@ -8,4 +8,14 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  server: {
+    proxy: {
+      // Proxy requests starting with /generateBoard to your backend
+      '/generateBoard': {
+        target: 'http://localhost:18080',
+        changeOrigin: true,
+        secure: false, // only needed if you use https
+      }
+    }
+  }
 })

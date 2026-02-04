@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom"
+
 import LayingDown from "../assets/hero/LayingDown.svg";
 import LBlob from "../assets/hero/LBlob.svg";
 import RBlob from "../assets/hero/RBlob.svg";
@@ -37,13 +39,17 @@ export default function Hero() {
         </p>
 
         <div className="mt-4 flex flex-row gap-6 sm:gap-4">
-          <button className="rounded-md bg-gray-900 px-8 py-3 text-white font-bold hover:bg-gray-700 transition">
-            Practice
-          </button>
+          <Link to="/Practice">
+            <button className="rounded-md bg-gray-900 px-8 py-3 text-white font-bold hover:bg-gray-700 transition">
+              Practice
+            </button>
+          </Link>
 
+        <Link to="/Compete">
           <button className="rounded-md bg-gray-900 px-8 py-3 text-white font-bold hover:bg-gray-700 transition">
             Compete
           </button>
+        </Link>
         </div>
       </div>
     </section>

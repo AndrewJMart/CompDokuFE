@@ -13,10 +13,10 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/practice" element={<Practice />} />
-        <Route path="/compete" element={<Compete />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/Practice" element={<Practice />} />
+        <Route path="/Compete" element={<Compete />} />
+        <Route path="/Login" element={<Login />} />
+        <Route path="/Signup" element={<Signup />} />
       </Routes>
     </Router>
   );
