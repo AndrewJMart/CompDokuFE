@@ -25,11 +25,11 @@ export default function Navbar() {
             Compete
           </span>
         </Link>
-        <Link to="/Login">
+        {/* <Link to="/Login">
           <span className="cursor-pointer hover:text-gray-300 font-semibold">
             Login
           </span>
-        </Link>
+        </Link> */}
         
       </div>
     </nav>
