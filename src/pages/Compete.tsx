@@ -9,6 +9,7 @@ export default function Compete() {
   const [winner, setWinner] = useState<string | null>(null);
 
   const socketRef = useRef<WebSocket | null>(null);
+  const solvedSentRef = useRef(false);
 
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:18080/compete");
@@ -23,6 +24,7 @@ export default function Compete() {
           setGrid(msg.board.map((row: number[]) => [...row]));
           setElapsed(0);
           setStatus("playing");
+          solvedSentRef.current = false;
           break;
 
         case "MOVE_RESULT":
@@ -32,6 +34,10 @@ export default function Compete() {
         case "GAME_OVER":
           setWinner(msg.winner);
           setStatus("finished");
+          break;
+
+        case "SOLVED_INVALID":
+          solvedSentRef.current = false;
           break;
       }
     };
@@ -43,11 +49,42 @@ export default function Compete() {
     return () => socket.close();
   }, []);
 
+  useEffect(() => {
+    if (status !== "playing") return;
+
+    const interval = setInterval(() => {
+      setElapsed((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [status]);
+
+  useEffect(() => {
+    if (status !== "playing") return;
+    if (!grid.length) return;
+    if (solvedSentRef.current) return;
+
+    const isFull = grid.every((row) =>
+      row.every((cell) => cell !== 0)
+    );
+
+    if (isFull) {
+      solvedSentRef.current = true;
+
+      socketRef.current?.send(
+        JSON.stringify({
+          type: "SOLVED",
+        })
+      );
+    }
+  }, [grid, status]);
+
   const handleChange = (rowIdx: number, colIdx: number, value: string) => {
     if (!initialGrid) return;
     if (initialGrid[rowIdx][colIdx] !== 0) return;
 
     const num = parseInt(value);
+
     if (value === "") {
       socketRef.current?.send(
         JSON.stringify({
