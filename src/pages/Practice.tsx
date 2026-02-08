@@ -14,6 +14,8 @@ export default function Practice() {
         const res = await fetch("/api/generateBoard");
         const data = await res.json();
 
+        console.log(data)
+
         const boardCopy = data.Board.map((row: number[]) => [...row]);
 
         setInitialGrid(boardCopy);
