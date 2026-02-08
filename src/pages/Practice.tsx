@@ -11,7 +11,7 @@ export default function Practice() {
   useEffect(() => {
     async function fetchBoard() {
       try {
-        const res = await fetch("/generateBoard");
+        const res = await fetch("/api/generateBoard");
         const data = await res.json();
 
         const boardCopy = data.Board.map((row: number[]) => [...row]);

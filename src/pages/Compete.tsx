@@ -12,7 +12,7 @@ export default function Compete() {
   const solvedSentRef = useRef(false);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:18080/compete");
+    const socket = new WebSocket(`${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws/compete`);
     socketRef.current = socket;
 
     socket.onmessage = (e) => {
