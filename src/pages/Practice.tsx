@@ -1,25 +1,26 @@
 import { useEffect, useState } from "react";
 
 export default function Practice() {
-  const [initialGrid, setInitialGrid] = useState<number[][] | null>(null);
+  const [playableBoard, setPlayableBoard] = useState<number[][] | null>(null);
+  const [solvedBoard, setSolvedBoard] = useState<number[][] | null>(null);
   const [grid, setGrid] = useState<number[][]>([]);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsed, setElapsed] = useState<number>(0);
   const [solved, setSolved] = useState(false);
 
-
+  // Fetch board
   useEffect(() => {
     async function fetchBoard() {
       try {
         const res = await fetch("/api/generateBoard");
         const data = await res.json();
 
-        console.log(data)
+        const playableCopy = data.playableBoard.map((row: number[]) => [...row]);
+        const solvedCopy = data.solvedBoard.map((row: number[]) => [...row]);
 
-        const boardCopy = data.Board.map((row: number[]) => [...row]);
-
-        setInitialGrid(boardCopy);
-        setGrid(boardCopy.map((row: number[]) => [...row]));
+        setPlayableBoard(playableCopy);
+        setSolvedBoard(solvedCopy);
+        setGrid(playableCopy.map((row: number[]) => [...row]));
         setSolved(false);
         setElapsed(0);
         setStartTime(new Date());
@@ -30,38 +31,48 @@ export default function Practice() {
 
     fetchBoard();
   }, []);
-  
+
   // Timer
   useEffect(() => {
     if (!startTime || solved) return;
 
     const interval = setInterval(() => {
       setElapsed(
-        Math.floor((new Date().getTime() - startTime.getTime()) / 1000)
+        Math.floor((Date.now() - startTime.getTime()) / 1000)
       );
     }, 1000);
 
     return () => clearInterval(interval);
   }, [startTime, solved]);
 
+  // Check solution when grid is full
   useEffect(() => {
-    if (!grid.length) return;
-    const filled = grid.flat().every((v) => v !== 0);
-    if (filled) setSolved(true);
-  }, [grid]);
+    if (!grid.length || !solvedBoard) return;
+
+    const isFilled = grid.flat().every((v) => v !== 0);
+    if (!isFilled) return;
+
+    const isCorrect = grid.every((row, r) =>
+      row.every((value, c) => value === solvedBoard[r][c])
+    );
+
+    if (isCorrect) {
+      setSolved(true);
+    }
+  }, [grid, solvedBoard]);
 
   const handleChange = (
     rowIdx: number,
     colIdx: number,
     value: string
   ) => {
-    if (!initialGrid) return;
+    if (!playableBoard || solved) return;
+
+    // Only allow edits on non-given cells
+    if (playableBoard[rowIdx][colIdx] !== 0) return;
 
     const num = parseInt(value);
     const newGrid = grid.map((row) => [...row]);
-
-    // Only allow edits on non-given cells
-    if (initialGrid[rowIdx][colIdx] !== 0) return;
 
     if (value === "") {
       newGrid[rowIdx][colIdx] = 0;
@@ -80,7 +91,7 @@ export default function Practice() {
       .padStart(2, "0")}`;
   };
 
-  if (!initialGrid) {
+  if (!playableBoard) {
     return (
       <section className="min-h-screen grid place-items-center bg-gray-100">
         <div className="text-lg font-semibold">Loading board…</div>
@@ -112,7 +123,7 @@ export default function Practice() {
                 colIdx === 8 ? "border-r-2" : "",
               ].join(" ");
 
-              const isGiven = initialGrid[rowIdx][colIdx] !== 0;
+              const isGiven = playableBoard[rowIdx][colIdx] !== 0;
 
               return (
                 <input
