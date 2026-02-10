@@ -25,12 +25,12 @@ export default function Compete() {
 
     socket.onmessage = (e) => {
       const msg = JSON.parse(e.data);
+      console.log("Received message:", e.data);
+      console.log("Parsed message:", msg);
+
 
       switch (msg.type) {
-        case "PING":
-          socket.send(JSON.stringify({ type: "PONG" }));
-          break;
-
+        
         case "MATCH_START":
           setInitialGrid(msg.board);
           setGrid(msg.board.map((row: number[]) => [...row]));
