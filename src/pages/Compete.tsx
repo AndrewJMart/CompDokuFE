@@ -12,7 +12,7 @@ export default function Compete() {
   const solvedSentRef = useRef(false);
 
   useEffect(() => {
-    const socket =  new WebSocket("/ws/compete");
+    const socket = new WebSocket("/ws/compete");
     socketRef.current = socket;
 
     socket.onmessage = (e) => {
@@ -33,6 +33,11 @@ export default function Compete() {
 
         case "GAME_OVER":
           setWinner(msg.winner);
+          setStatus("finished");
+          break;
+
+        case "PLAYER_LEFT":
+          setWinner("you");
           setStatus("finished");
           break;
 
