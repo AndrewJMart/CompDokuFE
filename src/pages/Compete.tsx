@@ -7,24 +7,37 @@ export default function Compete() {
   const [status, setStatus] =
     useState<"waiting" | "playing" | "finished">("waiting");
   const [winner, setWinner] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "reconnecting">("connected");
+  const [isIncorrect, setIsIncorrect] = useState(false);
 
   const socketRef = useRef<WebSocket | null>(null);
   const solvedSentRef = useRef(false);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
+  const connectWebSocket = () => {
     const socket = new WebSocket("/ws/compete");
     socketRef.current = socket;
+
+    socket.onopen = () => {
+      console.log("WebSocket connected");
+      setConnectionStatus("connected");
+    };
 
     socket.onmessage = (e) => {
       const msg = JSON.parse(e.data);
 
       switch (msg.type) {
+        case "PING":
+          socket.send(JSON.stringify({ type: "PONG" }));
+          break;
+
         case "MATCH_START":
           setInitialGrid(msg.board);
           setGrid(msg.board.map((row: number[]) => [...row]));
           setElapsed(0);
           setStatus("playing");
           solvedSentRef.current = false;
+          setIsIncorrect(false);
           break;
 
         case "MOVE_RESULT":
@@ -43,6 +56,7 @@ export default function Compete() {
 
         case "SOLVED_INVALID":
           solvedSentRef.current = false;
+          setIsIncorrect(true);
           break;
       }
     };
@@ -51,7 +65,33 @@ export default function Compete() {
       console.error("WebSocket error:", err);
     };
 
-    return () => socket.close();
+    socket.onclose = (event) => {
+      console.log("WebSocket closed:", event.code, event.reason, "wasClean:", event.wasClean);
+      setConnectionStatus("disconnected");
+
+      if (status === "playing" && !event.wasClean) {
+        setConnectionStatus("reconnecting");
+        reconnectTimeoutRef.current = setTimeout(() => {
+          console.log("Attempting to reconnect...");
+          connectWebSocket();
+        }, 2000);
+      }
+    };
+
+    return socket;
+  };
+
+  useEffect(() => {
+    connectWebSocket();
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -87,6 +127,8 @@ export default function Compete() {
   const handleChange = (rowIdx: number, colIdx: number, value: string) => {
     if (!initialGrid) return;
     if (initialGrid[rowIdx][colIdx] !== 0) return;
+
+    setIsIncorrect(false);
 
     const num = parseInt(value);
 
@@ -127,6 +169,12 @@ export default function Compete() {
       <section className="min-h-screen grid place-items-center bg-gray-100">
         <div className="bg-white p-6 rounded-xl shadow text-center">
           <p className="text-gray-600">Waiting for an opponent…</p>
+          {connectionStatus === "disconnected" && (
+            <p className="text-red-600 mt-2">Connection lost</p>
+          )}
+          {connectionStatus === "reconnecting" && (
+            <p className="text-yellow-600 mt-2">Reconnecting...</p>
+          )}
         </div>
       </section>
     );
@@ -151,6 +199,15 @@ export default function Compete() {
           <div className="bg-gray-100 px-3 py-1 rounded-md">
             Time: {formatTime(elapsed)}
           </div>
+          {connectionStatus !== "connected" && (
+            <div className={`px-3 py-1 rounded-md ${
+              connectionStatus === "reconnecting" 
+                ? "bg-yellow-100 text-yellow-800" 
+                : "bg-red-100 text-red-800"
+            }`}>
+              {connectionStatus === "reconnecting" ? "Reconnecting..." : "Disconnected"}
+            </div>
+          )}
         </div>
 
         <div
@@ -187,6 +244,12 @@ export default function Compete() {
             })
           )}
         </div>
+
+        {isIncorrect && status === "playing" && (
+          <div className="mt-2 font-semibold text-lg text-red-600">
+            Incorrect
+          </div>
+        )}
 
         {status === "finished" && (
           <div className="mt-2 font-semibold text-lg">
