@@ -12,7 +12,7 @@ export default function Compete() {
 
   const socketRef = useRef<WebSocket | null>(null);
   const solvedSentRef = useRef(false);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
 
   const connectWebSocket = () => {
     const socket = new WebSocket("/ws/compete");
