@@ -16,18 +16,10 @@ export default function Compete() {
 
   const connectWebSocket = () => {
     const socket = new WebSocket("/ws/compete");
-    let keepAliveInterval: number;
     socketRef.current = socket;
 
     socket.onopen = () => {
       setConnectionStatus("connected");
-      
-        keepAliveInterval = setInterval(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: 'ping' }));
-        }
-      }, 15000);
-
     };
 
     socket.onmessage = (e) => {
@@ -35,7 +27,8 @@ export default function Compete() {
 
       switch (msg.type) {
 
-        case "PONG":
+        case "SERVER_PING":
+          socket.send(JSON.stringify({ type: 'PONG' }));
           break;
 
         case "MATCH_START":
@@ -74,7 +67,6 @@ export default function Compete() {
 
     socket.onclose = (event) => {
       console.log("WebSocket closed:", event.code, event.reason, "wasClean:", event.wasClean);
-      clearInterval(keepAliveInterval);
       setConnectionStatus("disconnected");
 
       if (status === "playing" && !event.wasClean) {
