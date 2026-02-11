@@ -7,8 +7,8 @@ export default function Practice() {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsed, setElapsed] = useState<number>(0);
   const [solved, setSolved] = useState(false);
+  const [isIncorrect, setIsIncorrect] = useState(false);
 
-  // Fetch board
   useEffect(() => {
     async function fetchBoard() {
       try {
@@ -22,6 +22,7 @@ export default function Practice() {
         setSolvedBoard(solvedCopy);
         setGrid(playableCopy.map((row: number[]) => [...row]));
         setSolved(false);
+        setIsIncorrect(false);
         setElapsed(0);
         setStartTime(new Date());
       } catch (err) {
@@ -32,7 +33,6 @@ export default function Practice() {
     fetchBoard();
   }, []);
 
-  // Timer
   useEffect(() => {
     if (!startTime || solved) return;
 
@@ -45,7 +45,6 @@ export default function Practice() {
     return () => clearInterval(interval);
   }, [startTime, solved]);
 
-  // Check solution when grid is full
   useEffect(() => {
     if (!grid.length || !solvedBoard) return;
 
@@ -58,6 +57,9 @@ export default function Practice() {
 
     if (isCorrect) {
       setSolved(true);
+      setIsIncorrect(false);
+    } else {
+      setIsIncorrect(true);
     }
   }, [grid, solvedBoard]);
 
@@ -68,8 +70,9 @@ export default function Practice() {
   ) => {
     if (!playableBoard || solved) return;
 
-    // Only allow edits on non-given cells
     if (playableBoard[rowIdx][colIdx] !== 0) return;
+
+    setIsIncorrect(false);
 
     const num = parseInt(value);
     const newGrid = grid.map((row) => [...row]);
@@ -144,6 +147,12 @@ export default function Practice() {
             })
           )}
         </div>
+
+        {isIncorrect && !solved && (
+          <div className="mt-2 font-semibold text-lg text-red-600">
+            Incorrect
+          </div>
+        )}
 
         {solved && (
           <p className="text-green-600 font-semibold mt-2">
