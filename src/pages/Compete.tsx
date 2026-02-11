@@ -35,6 +35,9 @@ export default function Compete() {
 
       switch (msg.type) {
 
+        case "PONG":
+          break;
+
         case "MATCH_START":
           setInitialGrid(msg.board);
           setGrid(msg.board.map((row: number[]) => [...row]));
