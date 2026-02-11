@@ -13,6 +13,9 @@ export default function Compete() {
   const socketRef = useRef<WebSocket | null>(null);
   const solvedSentRef = useRef(false);
   const reconnectTimeoutRef = useRef<number | null>(null);
+  const inputRefs = useRef<(HTMLInputElement | null)[][]>(
+    Array.from({ length: 9 }, () => Array(9).fill(null))
+  );
 
   const connectWebSocket = () => {
     const socket = new WebSocket("/ws/compete");
@@ -156,6 +159,32 @@ export default function Compete() {
     );
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent, rowIdx: number, colIdx: number) => {
+    if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) return;
+    
+    e.preventDefault();
+    
+    let newRow = rowIdx;
+    let newCol = colIdx;
+
+    switch (e.key) {
+      case "ArrowUp":
+        newRow = Math.max(0, rowIdx - 1);
+        break;
+      case "ArrowDown":
+        newRow = Math.min(8, rowIdx + 1);
+        break;
+      case "ArrowLeft":
+        newCol = Math.max(0, colIdx - 1);
+        break;
+      case "ArrowRight":
+        newCol = Math.min(8, colIdx + 1);
+        break;
+    }
+
+    inputRefs.current[newRow][newCol]?.focus();
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -228,6 +257,9 @@ export default function Compete() {
               return (
                 <input
                   key={`${rowIdx}-${colIdx}`}
+                  ref={(el) => {
+                    inputRefs.current[rowIdx][colIdx] = el;
+                  }}
                   type="text"
                   maxLength={1}
                   value={value === 0 ? "" : value}
@@ -235,6 +267,7 @@ export default function Compete() {
                   onChange={(e) =>
                     handleChange(rowIdx, colIdx, e.target.value)
                   }
+                  onKeyDown={(e) => handleKeyDown(e, rowIdx, colIdx)}
                   className={`w-full h-full text-center text-sm sm:text-base font-bold border ${borderClasses} rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-900 ${
                     isGiven ? "bg-gray-200" : "bg-white"
                   }`}

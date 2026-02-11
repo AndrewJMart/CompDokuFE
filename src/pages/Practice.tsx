@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Practice() {
   const [playableBoard, setPlayableBoard] = useState<number[][] | null>(null);
@@ -7,6 +7,10 @@ export default function Practice() {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsed, setElapsed] = useState<number>(0);
   const [solved, setSolved] = useState(false);
+
+  const inputRefs = useRef<(HTMLInputElement | null)[][]>(
+    Array.from({ length: 9 }, () => Array(9).fill(null))
+  );
 
   // Fetch board
   useEffect(() => {
@@ -83,6 +87,32 @@ export default function Practice() {
     setGrid(newGrid);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent, rowIdx: number, colIdx: number) => {
+    if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) return;
+    
+    e.preventDefault();
+    
+    let newRow = rowIdx;
+    let newCol = colIdx;
+
+    switch (e.key) {
+      case "ArrowUp":
+        newRow = Math.max(0, rowIdx - 1);
+        break;
+      case "ArrowDown":
+        newRow = Math.min(8, rowIdx + 1);
+        break;
+      case "ArrowLeft":
+        newCol = Math.max(0, colIdx - 1);
+        break;
+      case "ArrowRight":
+        newCol = Math.min(8, colIdx + 1);
+        break;
+    }
+
+    inputRefs.current[newRow][newCol]?.focus();
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -128,6 +158,9 @@ export default function Practice() {
               return (
                 <input
                   key={`${rowIdx}-${colIdx}`}
+                  ref={(el) => {
+                    inputRefs.current[rowIdx][colIdx] = el;
+                  }}
                   type="text"
                   maxLength={1}
                   value={value === 0 ? "" : value}
@@ -135,6 +168,7 @@ export default function Practice() {
                   onChange={(e) =>
                     handleChange(rowIdx, colIdx, e.target.value)
                   }
+                  onKeyDown={(e) => handleKeyDown(e, rowIdx, colIdx)}
                   className={`w-full h-full text-center text-sm sm:text-base font-bold border ${borderClasses} rounded-sm focus:outline-none focus:ring-2 focus:ring-gray-900 ${
                     isGiven ? "bg-gray-200" : "bg-white"
                   }`}
